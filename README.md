@@ -120,20 +120,6 @@ Multi-language: Support for regional languages
 Personalization: Adapt content based on student's learning level
 
 🔍 Implementation Details
-Sample Code Structure
-ai-video-generator/
-├── app/
-│   ├── main.py              # FastAPI app
-│   ├── knowledge_graph.py   # Concept storage
-│   ├── ai_generator.py      # Content creation
-│   └── manim_scenes.py      # Video rendering
-├── data/
-│   ├── concepts.json        # Sample concepts
-│   └── templates/           # Content templates
-├── tests/
-│   └── test_basic.py        # Basic tests
-├── docker-compose.yml       # Local setup
-└── requirements.txt         # Dependencies
 
 Key Algorithms
 Concept Retrieval:
