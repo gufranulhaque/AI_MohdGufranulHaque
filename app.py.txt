@@ -1,0 +1,215 @@
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+import os
+import asyncio
+from datetime import datetime
+
+from knowledge_graph import KnowledgeGraph
+from ai_generator import AIGenerator
+from manim_scenes import VideoRenderer
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="AI Educational Video Generator",
+    description="Generate educational videos using AI and Manim",
+    version="1.0.0"
+)
+
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# Initialize services
+kg = KnowledgeGraph()
+ai_gen = AIGenerator()
+video_renderer = VideoRenderer()
+
+# Request/Response models
+class GenerationRequest(BaseModel):
+    concept: str
+    domain: str
+    difficulty: str = "intermediate"
+
+class GenerationResponse(BaseModel):
+    success: bool
+    job_id: str = None
+    video_path: str = None
+    message: str = None
+    estimated_time: int = 300  # 5 minutes
+
+# In-memory job storage (use Redis in production)
+active_jobs = {}
+
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    """Main page with concept selection interface"""
+    concepts = kg.get_all_concepts()
+    return templates.TemplateResponse("index.html", {
+        "request": {},
+        "concepts": concepts,
+        "domains": ["DSA", "GIS", "SpaceTech"]
+    })
+
+@app.get("/api/concepts")
+async def get_concepts():
+    """Get all available concepts organized by domain"""
+    try:
+        concepts = kg.get_all_concepts()
+        return {"success": True, "concepts": concepts}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/concept/{concept_id}")
+async def get_concept_details(concept_id: str, domain: str = None):
+    """Get detailed information about a specific concept"""
+    try:
+        concept = kg.get_concept(concept_id, domain)
+        if not concept:
+            raise HTTPException(status_code=404, detail="Concept not found")
+        
+        return {"success": True, "concept": concept}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/generate", response_model=GenerationResponse)
+async def generate_video(request: GenerationRequest):
+    """
+    Main endpoint for generating educational videos
+    Returns job ID for async processing
+    """
+    try:
+        # Validate concept exists
+        concept_data = kg.get_concept(request.concept, request.domain)
+        if not concept_data:
+            return GenerationResponse(
+                success=False,
+                message=f"Concept '{request.concept}' not found in domain '{request.domain}'"
+            )
+        
+        # Generate unique job ID
+        job_id = f"{request.concept}_{request.domain}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Store job info
+        active_jobs[job_id] = {
+            "status": "processing",
+            "concept": request.concept,
+            "domain": request.domain,
+            "started_at": datetime.now(),
+            "progress": 0
+        }
+        
+        # Start background video generation
+        asyncio.create_task(process_video_generation(job_id, concept_data, request.domain))
+        
+        return GenerationResponse(
+            success=True,
+            job_id=job_id,
+            message="Video generation started",
+            estimated_time=300
+        )
+        
+    except Exception as e:
+        return GenerationResponse(
+            success=False,
+            message=f"Error starting video generation: {str(e)}"
+        )
+
+@app.get("/api/status/{job_id}")
+async def get_job_status(job_id: str):
+    """Check the status of a video generation job"""
+    if job_id not in active_jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    job_info = active_jobs[job_id]
+    return {
+        "job_id": job_id,
+        "status": job_info["status"],
+        "progress": job_info.get("progress", 0),
+        "video_path": job_info.get("video_path"),
+        "error": job_info.get("error")
+    }
+
+@app.get("/api/download/{filename}")
+async def download_video(filename: str):
+    """Serve generated video files"""
+    video_path = f"outputs/videos/{filename}"
+    
+    if not os.path.exists(video_path):
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    return FileResponse(
+        video_path,
+        media_type="video/mp4",
+        filename=filename
+    )
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(),
+        "services": {
+            "knowledge_graph": "active",
+            "ai_generator": "active",
+            "video_renderer": "active"
+        }
+    }
+
+async def process_video_generation(job_id: str, concept_data: dict, domain: str):
+    """
+    Background task for video generation
+    """
+    try:
+        # Update progress: Starting AI generation
+        active_jobs[job_id]["progress"] = 10
+        active_jobs[job_id]["status"] = "generating_content"
+        
+        # Step 1: Generate content with AI
+        ai_content = await ai_gen.generate_content_async(concept_data, domain)
+        active_jobs[job_id]["progress"] = 40
+        
+        # Step 2: Create video with Manim
+        active_jobs[job_id]["status"] = "rendering_video"
+        video_path = await video_renderer.create_video_async(ai_content, job_id, domain)
+        active_jobs[job_id]["progress"] = 90
+        
+        # Step 3: Finalize
+        active_jobs[job_id]["status"] = "completed"
+        active_jobs[job_id]["progress"] = 100
+        active_jobs[job_id]["video_path"] = video_path
+        active_jobs[job_id]["completed_at"] = datetime.now()
+        
+        print(f"✅ Video generation completed for job {job_id}")
+        
+    except Exception as e:
+        # Handle errors
+        active_jobs[job_id]["status"] = "failed"
+        active_jobs[job_id]["error"] = str(e)
+        active_jobs[job_id]["failed_at"] = datetime.now()
+        
+        print(f"❌ Video generation failed for job {job_id}: {str(e)}")
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    print("🚀 Starting AI Educational Video Generator...")
+    print("📚 Loading knowledge graph...")
+    
+    # Initialize knowledge graph with sample data
+    kg.initialize_sample_data()
+    
+    print("✅ System ready!")
+    print("🌐 Access the application at: http://localhost:8000")
+    
+    # Run the application
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )

@@ -1,0 +1,264 @@
+import json
+import os
+from typing import Dict, List, Optional
+
+class KnowledgeGraph:
+    """
+    Simple knowledge graph implementation using JSON files
+    For production, this would be replaced with Neo4j
+    """
+    
+    def __init__(self):
+        self.concepts = {}
+        self.data_path = "data/concepts/"
+    
+    def initialize_sample_data(self):
+        """Load sample educational concepts from JSON files"""
+        try:
+            # Load DSA concepts
+            dsa_path = os.path.join(self.data_path, "dsa_concepts.json")
+            if os.path.exists(dsa_path):
+                with open(dsa_path, 'r') as f:
+                    dsa_concepts = json.load(f)
+                    self.concepts.update(dsa_concepts)
+            
+            # Load GIS concepts
+            gis_path = os.path.join(self.data_path, "gis_concepts.json")
+            if os.path.exists(gis_path):
+                with open(gis_path, 'r') as f:
+                    gis_concepts = json.load(f)
+                    self.concepts.update(gis_concepts)
+            
+            # Load Space Tech concepts
+            space_path = os.path.join(self.data_path, "space_concepts.json")
+            if os.path.exists(space_path):
+                with open(space_path, 'r') as f:
+                    space_concepts = json.load(f)
+                    self.concepts.update(space_concepts)
+            
+            # If no files exist, create sample data
+            if not self.concepts:
+                self._create_sample_concepts()
+            
+            print(f"📊 Loaded {len(self.concepts)} concepts")
+            
+        except Exception as e:
+            print(f"⚠️ Error loading concepts: {e}")
+            self._create_sample_concepts()
+    
+    def _create_sample_concepts(self):
+        """Create sample concepts if no data files exist"""
+        sample_concepts = {
+            "binary_search": {
+                "title": "Binary Search Algorithm",
+                "domain": "DSA",
+                "difficulty": "intermediate",
+                "description": "Efficient algorithm for finding an item from a sorted list of items",
+                "prerequisites": ["arrays", "sorting"],
+                "key_points": [
+                    "Works only on sorted arrays",
+                    "Uses divide and conquer approach",
+                    "Time complexity: O(log n)",
+                    "Space complexity: O(1) for iterative version"
+                ],
+                "examples": [
+                    "Finding a word in dictionary",
+                    "Searching in phone directory",
+                    "Finding a book in library catalog"
+                ],
+                "applications": [
+                    "Database indexing",
+                    "Search engines",
+                    "Computer graphics"
+                ]
+            },
+            "quicksort": {
+                "title": "Quick Sort Algorithm",
+                "domain": "DSA",
+                "difficulty": "advanced",
+                "description": "Efficient divide-and-conquer sorting algorithm",
+                "prerequisites": ["arrays", "recursion"],
+                "key_points": [
+                    "Uses pivot element for partitioning",
+                    "Average time complexity: O(n log n)",
+                    "Worst case: O(n²)",
+                    "In-place sorting algorithm"
+                ],
+                "examples": [
+                    "Sorting student grades",
+                    "Organizing file systems",
+                    "Database query optimization"
+                ],
+                "applications": [
+                    "Programming language libraries",
+                    "Operating systems",
+                    "Database management systems"
+                ]
+            },
+            "spatial_indexing": {
+                "title": "Spatial Indexing",
+                "domain": "GIS",
+                "difficulty": "advanced",
+                "description": "Methods for efficiently organizing and querying spatial data",
+                "prerequisites": ["coordinate_systems", "data_structures"],
+                "key_points": [
+                    "R-tree and Quadtree structures",
+                    "Improves spatial query performance",
+                    "Handles multi-dimensional data",
+                    "Essential for GIS applications"
+                ],
+                "examples": [
+                    "Finding nearest restaurants",
+                    "Route optimization",
+                    "Weather data analysis"
+                ],
+                "applications": [
+                    "GPS navigation systems",
+                    "Location-based services",
+                    "Geographic databases"
+                ]
+            },
+            "orbital_mechanics": {
+                "title": "Orbital Mechanics Fundamentals",
+                "domain": "SpaceTech",
+                "difficulty": "intermediate",
+                "description": "Study of motion of spacecraft and celestial bodies in space",
+                "prerequisites": ["physics", "calculus"],
+                "key_points": [
+                    "Kepler's laws of planetary motion",
+                    "Orbital velocity calculations",
+                    "Types of orbits (circular, elliptical)",
+                    "Gravitational forces and energy"
+                ],
+                "examples": [
+                    "Satellite trajectories",
+                    "Planetary missions",
+                    "Space station orbits"
+                ],
+                "applications": [
+                    "Satellite communication",
+                    "Space exploration missions",
+                    "Weather satellites"
+                ]
+            }
+        }
+        
+        self.concepts.update(sample_concepts)
+    
+    def get_concept(self, concept_id: str, domain: str = None) -> Optional[Dict]:
+        """
+        Retrieve a specific concept by ID and optionally filter by domain
+        """
+        concept = self.concepts.get(concept_id.lower())
+        
+        if concept and domain:
+            if concept.get('domain', '').lower() != domain.lower():
+                return None
+        
+        return concept
+    
+    def get_all_concepts(self) -> Dict[str, List[Dict]]:
+        """
+        Get all concepts organized by domain
+        """
+        concepts_by_domain = {}
+        
+        for concept_id, concept_data in self.concepts.items():
+            domain = concept_data.get('domain', 'General')
+            
+            if domain not in concepts_by_domain:
+                concepts_by_domain[domain] = []
+            
+            concepts_by_domain[domain].append({
+                'id': concept_id,
+                'title': concept_data['title'],
+                'difficulty': concept_data.get('difficulty', 'intermediate'),
+                'description': concept_data['description'][:100] + "..." if len(concept_data['description']) > 100 else concept_data['description']
+            })
+        
+        return concepts_by_domain
+    
+    def get_concepts_by_domain(self, domain: str) -> List[Dict]:
+        """
+        Get all concepts for a specific domain
+        """
+        domain_concepts = []
+        
+        for concept_id, concept_data in self.concepts.items():
+            if concept_data.get('domain', '').lower() == domain.lower():
+                domain_concepts.append({
+                    'id': concept_id,
+                    'title': concept_data['title'],
+                    'difficulty': concept_data.get('difficulty', 'intermediate'),
+                    'description': concept_data['description'],
+                    'prerequisites': concept_data.get('prerequisites', []),
+                    'key_points': concept_data.get('key_points', [])
+                })
+        
+        return domain_concepts
+    
+    def search_concepts(self, query: str, domain: str = None) -> List[Dict]:
+        """
+        Simple text-based search in concepts
+        """
+        results = []
+        query_lower = query.lower()
+        
+        for concept_id, concept_data in self.concepts.items():
+            # Skip if domain filter doesn't match
+            if domain and concept_data.get('domain', '').lower() != domain.lower():
+                continue
+            
+            # Search in title, description, and key points
+            searchable_text = (
+                concept_data['title'] + " " +
+                concept_data['description'] + " " +
+                " ".join(concept_data.get('key_points', []))
+            ).lower()
+            
+            if query_lower in searchable_text:
+                results.append({
+                    'id': concept_id,
+                    'title': concept_data['title'],
+                    'domain': concept_data.get('domain', 'General'),
+                    'description': concept_data['description'],
+                    'relevance': searchable_text.count(query_lower)  # Simple relevance scoring
+                })
+        
+        # Sort by relevance
+        results.sort(key=lambda x: x['relevance'], reverse=True)
+        return results
+    
+    def get_prerequisites(self, concept_id: str) -> List[str]:
+        """
+        Get prerequisite concepts for a given concept
+        """
+        concept = self.concepts.get(concept_id.lower())
+        return concept.get('prerequisites', []) if concept else []
+    
+    def add_concept(self, concept_id: str, concept_data: Dict):
+        """
+        Add a new concept to the knowledge graph
+        """
+        self.concepts[concept_id.lower()] = concept_data
+        print(f"✅ Added new concept: {concept_data.get('title', concept_id)}")
+    
+    def save_concepts_to_file(self, domain: str, filename: str = None):
+        """
+        Save concepts of a specific domain to JSON file
+        """
+        if not filename:
+            filename = f"{domain.lower()}_concepts.json"
+        
+        domain_concepts = {}
+        for concept_id, concept_data in self.concepts.items():
+            if concept_data.get('domain', '').lower() == domain.lower():
+                domain_concepts[concept_id] = concept_data
+        
+        filepath = os.path.join(self.data_path, filename)
+        os.makedirs(self.data_path, exist_ok=True)
+        
+        with open(filepath, 'w') as f:
+            json.dump(domain_concepts, f, indent=2)
+        
+        print
