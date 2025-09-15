@@ -81,7 +81,7 @@ Deployment: Docker containers
 
 🏃‍♂️ Quick Start
 bash# Clone the project
-git clone https://github.com/yourusername/ai-video-generator
+git clone https://github.com/gufranulhaque/AI_MohdGufranulHaque
 cd ai-video-generator
 
 Install dependencies
