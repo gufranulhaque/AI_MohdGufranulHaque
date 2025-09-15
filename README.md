@@ -11,7 +11,6 @@ Creating animated videos with Manim
 Supporting different domains like DSA, GIS, and Space Technology
 
 🏗️ System Architecture
-![System Architecture](Untitled diagram _ Mermaid Chart-2025-09-15-081455.png)
 
 🔧 Core Components
 1. Knowledge Graph
@@ -26,20 +25,21 @@ Why this choice: OpenAI gives better quality, local models save cost
 What it does: Converts content to animated videos
 Technology: Manim (Mathematical Animation Engine)
 Why this choice: Professional quality animations, especially good for math/CS concepts
+
 🔄 How It Works
 python# Main Algorithm
 def generate_educational_video(concept, domain):
-    # Step 1: Get concept data
+    Step 1: Get concept data
     concept_data = knowledge_graph.retrieve(concept, domain)
     
-    # Step 2: Generate content with AI
+     Step 2: Generate content with AI
     slides = ai_generator.create_slides(concept_data)
     script = ai_generator.create_narration(concept_data)
     
-    # Step 3: Create video with Manim
+     Step 3: Create video with Manim
     video = manim_renderer.create_video(slides, script, domain)
     
-    # Step 4: Save and return
+     Step 4: Save and return
     return save_video(video)
 Detailed Process Flow
 
