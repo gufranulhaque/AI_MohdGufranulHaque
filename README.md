@@ -78,22 +78,23 @@ AI: OpenAI GPT-4 API
 Animation: Manim Community Edition
 Frontend: Simple React.js interface
 Deployment: Docker containers
+
 🏃‍♂️ Quick Start
 bash# Clone the project
 git clone https://github.com/yourusername/ai-video-generator
 cd ai-video-generator
 
-# Install dependencies
+Install dependencies
 pip install -r requirements.txt
 
-# Set up environment
+Set up environment
 cp .env.example .env
 # Add your OpenAI API key to .env
 
-# Run the system
+Run the system
 python app/main.py
 
-# Visit http://localhost:8000
+
 📊 Trade-offs Made
 DecisionOption AOption BChosenWhy?FrameworkFlaskFastAPIFastAPIBetter for async AI callsDatabaseJSON filesNeo4jNeo4jBetter for concept relationshipsAI ServiceLocal modelOpenAI APIOpenAI APIHigher quality outputAnimationWeb-basedManimManimProfessional educational videos
 🎯 Key Challenges Solved
@@ -133,23 +134,24 @@ ai-video-generator/
 │   └── test_basic.py        # Basic tests
 ├── docker-compose.yml       # Local setup
 └── requirements.txt         # Dependencies
+
 Key Algorithms
 Concept Retrieval:
 pythondef get_learning_path(start_concept, target_concept):
-    # Find shortest path in concept graph
-    # Returns: [prerequisite_concepts] + [target_concept]
+     Find shortest path in concept graph
+     Returns: [prerequisite_concepts] + [target_concept]
     pass
 Content Generation:
 pythondef generate_slides(concept_data, domain):
-    # Create domain-specific slide templates
-    # Add concept-specific content
-    # Return structured slide data
+     Create domain-specific slide templates
+     Add concept-specific content
+     Return structured slide data
     pass
 Video Rendering:
 pythondef create_manim_scene(slides, domain):
-    # Choose domain-specific animations
-    # Apply slide content to animations
-    # Render final video
+     Choose domain-specific animations
+     Apply slide content to animations
+     Render final video
     pass
 📝 Testing Strategy
 
