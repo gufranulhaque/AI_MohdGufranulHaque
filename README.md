@@ -11,7 +11,7 @@ Creating animated videos with Manim
 Supporting different domains like DSA, GIS, and Space Technology
 
 🏗️ System Architecture
-![Alt text](Untitled diagram _ Mermaid Chart-2025-09-15-081455.png)
+![System Architecture](Untitled diagram _ Mermaid Chart-2025-09-15-081455.png)
 
 🔧 Core Components
 1. Knowledge Graph
